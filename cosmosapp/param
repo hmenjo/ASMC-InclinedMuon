@@ -14,15 +14,17 @@
  InitRN = 300798  -3319907
  PrimaryFile = 'primary'
 ! PrimaryFile = 'primary_e'
- CosZenith = (1.0, 1.0)
-! CosZenith = (0.9, 0.9)
- Azimuth = (0.0,0.0)
+! Zenith 70-90 degrees 
+ CosZenith = (0.0, 0.34) 
+! Vertical incident 
+! CosZenith = (1.0, 1.0) 
+ Azimuth = (0.0,360.0)
  HeightOfInj = 100.0e3
  DestEventNo = 1000 2
 
 ! Generate ='em/as'
- Generate ='em'
-! Generate ='as'
+! Generate ='em'
+ Generate ='as'
  ThinSampling = F
  IntModel = '"phits" 2.0 "dpmjet3"' 
 ! IntModel = '"phits" 2.0 "dpmjet3" 80 "qgsjet2"' 
