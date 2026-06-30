@@ -104,6 +104,7 @@
       integer:: pdgcode
       integer:: pdgcodein  ! ptcl code by PDG M.C 
       real*4 t
+      integer nevent, ntevent
 
 !     For id=2, you need not output the z values, z's are basically the same;
 !     it is "distance from the  baseL layer - 1cm" so if the observation layer
@@ -116,6 +117,9 @@
 !     Selection of muons(3), kaons(4) and pions(5)             
          if ( pcode .eq. 3 .or. pcode .eq. 4 .or. pcode .eq. 5 ) then
 
+            ! event number 
+            call cqEventNo(nevent, ntevent)
+
             ! Incident particle 
             call cqIncident(incident, angle)
             call ccos2pdg(incident%p, pdgcodein)
@@ -124,7 +128,9 @@
             call ccos2pdg(aTrack%p, pdgcode)
              t = aTrack%t + ObsSites(aTrack%where)%minitime/c *Tonsec
 
-            write(*,'(4i4,i12,e16.8,3g10.4,5e16.8,i12,4e16.8,e16.8)')
+            write(*,'(i10,4i4,i12,e16.8,3g10.4,5e16.8,
+     *            i12,4e16.8,e16.8)')
+     *            nevent,
      *            aTrack%where,  
      *            aTrack%p%code, 
      *            aTrack%p%subcode,
