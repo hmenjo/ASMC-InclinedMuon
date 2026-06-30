@@ -28,21 +28,40 @@
 
       real(8):: oldv
       integer:: icon
+      integer:: i
       
 !            namelist output
       call cwriteParam(ErrorOut, 0)
 !            primary information
       call cprintPrim(ErrorOut)
 !            observation level information
-      write(0,*) '==============================================='
-      write(0,*) '>>> Observation Level Information'
-      write(0,*) '==============================================='
+      write(0,*) '#==============================================='
+      write(0,*) '#>>> Observation Level Information'
+      write(0,*) '#==============================================='
       call cprintObs(ErrorOut)
-      write(0,*) '==============================================='
+      write(0,*) '#==============================================='
       call epResetEcrit(0, "Air", 81.0d-3, oldv, icon)
       write(0,*) 'icon=',icon,'Default Ecrit oldv(MeV)=', oldv*1000,
      * ' has been reset to ', 81, ' MeV'
 
+      write(*, '(a,g8.3,a,g8.3,a,g8.3,2a,g8.3)') 
+     *  '# Latitude=', sngl(LatitOfSite), 
+     *  ' deg. Longitude=', sngl(LongitOfSite), 
+     *  ' deg. DtGMT=', sngl(DtGMT), ' hours',
+     *  ' year for Geomagnetism=', sngl(YearOfGeomag)
+      write(*, '(a)') '#-----------------------------'
+      write(*, '(a)') '#  Position of Obs. sites '
+      write(*, '(a)' ) 
+     * '# ID  depth (g/cm2)    Height(m)   Distance to E-center(km)'//
+     * ' Molere Unit(m)     x,y,z in XYZ system (m)'
+      do i = 1, NoOfSites
+         !call cprObsSite(io, ObsSites(i))
+         write(*, '(a,i4,1p,6g13.4)')
+     *       "# ", i,
+     *       ObsSites(i)%pos%depth*0.1, ObsSites(i)%pos%height, 
+     *       ObsSites(i)%pos%radiallen/1000., 
+     *       ObsSites(i)%pos%xyz%r(1:3)
+      enddo
       end
 
 !     *********************************** hook for Beginning of  1 event
