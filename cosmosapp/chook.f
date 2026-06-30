@@ -81,9 +81,11 @@
 !      call ccos2pdg(incident%p, pdgcode)
 
 !      write(0,*) '1ry c,subc,chg, TE   cos-zenith '
-      write(*,'(A, I3, I3, I3, F12.1, F8.3)') "#PRIM ",
+      write(*,'(A, I3, I3, I3, F12.1, F8.3, 3F10.5)') 
+     *   "#PRIM ",
      *   incident%p%code, incident%p%subcode, incident%p%charge,
-     *   incident%p%fm%p(4), incident%vec%coszenith
+     *   incident%p%fm%p(4), incident%vec%coszenith, 
+     *   angle%r(1),angle%r(2),angle%r(3)
 
 !      npart = 0  ! npart(i,j) = 0 (i = 1,..., j = 1,...)
       
@@ -148,7 +150,7 @@
              t = aTrack%t + ObsSites(aTrack%where)%minitime/c *Tonsec
 
             write(*,'(i10,4i4,i12,e18.8,3g12.4,5e16.8,
-     *            i12,4e16.8,e16.8)')
+     *            i12,4e16.8,g16.8,3g16.8)')
      *            nevent,
      *            aTrack%where,  
      *            aTrack%p%code, 
@@ -165,7 +167,8 @@
      *            incident%p%fm%p(4)-incident%p%mass, 
      *            incident%p%fm%p(1),
      *            incident%p%fm%p(2), incident%p%fm%p(3),
-     *            incident%vec%coszenith
+     *            incident%vec%coszenith,
+     *            angle%r(1),angle%r(2),angle%r(3)
          endif  
       endif
 

@@ -15,10 +15,12 @@
  PrimaryFile = 'primary'
 ! PrimaryFile = 'primary_e'
 ! Zenith 70-90 degrees 
- CosZenith = (0.0, 0.34) 
+! CosZenith = (0.0, 0.34) 
 ! Vertical incident 
 ! CosZenith = (1.0, 1.0) 
- Azimuth = (0.0,360.0)
+ CosZenith = (0.8, 0.8) 
+! Azimuth = (0.0,360.0)
+ Azimuth = (45.0,45.0)
  HeightOfInj = 100.0e3
  DestEventNo = 1000 2
 

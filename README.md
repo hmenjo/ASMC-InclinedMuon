@@ -16,10 +16,10 @@ Before the execution, please setup the enviromental variables as
 cd (COSMOS-INSTALL DIRECTORY)
 source Scrpt/SetEnvironment.sh
 ```
-It is needed to be done only once in the terminal. These variables can be set manually as 
+It is needed to be done only once in the terminal. These variables can be set manually in your batch job script or bashrc as 
 ```
-LIBLOFT=/Users/menjo/Workspace/MCshower/CosmosX_0.09/LibLoft
-COSMOSTOP=/Users/menjo/Workspace/MCshower/CosmosX_0.09/Cosmos
+export LIBLOFT=/Users/menjo/Workspace/MCshower/CosmosX_0.09/LibLoft
+export COSMOSTOP=/Users/menjo/Workspace/MCshower/CosmosX_0.09/Cosmos
 ```
 
 ## Execute 
@@ -32,8 +32,8 @@ cd (Your repository path)/ASMC-InclinedMuon/cosmosapp/
 # Cosmos App output 
 
 ```
-            write(*,'(i10,4i4,i12,e16.8,3g10.4,5e16.8,
-     *            i12,4e16.8,e16.8)')
+            write(*,'(i10,4i4,i12,e18.8,3g12.4,5e16.8,
+     *            i12,4e16.8,g16.8,3g16.8)')
      *            nevent,
      *            aTrack%where,  
      *            aTrack%p%code, 
@@ -50,7 +50,8 @@ cd (Your repository path)/ASMC-InclinedMuon/cosmosapp/
      *            incident%p%fm%p(4)-incident%p%mass, 
      *            incident%p%fm%p(1),
      *            incident%p%fm%p(2), incident%p%fm%p(3),
-     *            incident%vec%coszenith
+     *            incident%vec%coszenith,
+     *            angle%r(1),angle%r(2),angle%r(3)
 ```
 
 - nevent : event ID 
@@ -72,6 +73,10 @@ cd (Your repository path)/ASMC-InclinedMuon/cosmosapp/
 - incident%p%fm%p(1) : px in Earth coordinate [GeV/c]
 - incident%p%fm%p(2) : py in Earth coordinate [GeV/c]
 - incident%p%fm%p(3) : pz in Earth coordinate [GeV/c]
-- incident%vec%coszenith : cos(Zenith angle)
+- incident%vec%coszenith : cos(Zenith angle) in the coordinate of the observation layer
+- angle*r(1) : x component of unit direction vertor in the primary plan (= deepest observation layer coordinate)
+- angle*r(2) : y component of unit direction vertor in the primary plan (= deepest observation layer coordinate)
+- angle*r(3) : z component of unit direction vertor (=cos(zenith angle)) in the primary plan (= deepest observation layer coordinate)
+
 
 
