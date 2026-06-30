@@ -24,8 +24,9 @@
  Generate ='em'
 ! Generate ='as'
  ThinSampling = F
- IntModel = '"phits" 2.0 "dpmjet3" 10 "sibyll"' 
+ IntModel = '"phits" 2.0 "dpmjet3"' 
 ! IntModel = '"phits" 2.0 "dpmjet3" 80 "qgsjet2"' 
+! IntModel = '"phits" 2.0 "dpmjet3" 10 "sibyll"' 
  IncMuonPolari = T
  KEminObs = 8*100e-6  ! 100 keV
  LpmEffect = T

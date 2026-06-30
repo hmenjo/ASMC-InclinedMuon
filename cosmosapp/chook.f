@@ -61,15 +61,14 @@
       call cqIncident(incident, angle)
 !      call ccos2pdg(incident%p, pdgcode)
 
-
 !      write(0,*) '1ry c,subc,chg, TE   cos-zenith '
-      write(*,'(A, I3, I3, I3, F12.1, F8.3)') "PRIM ",
+      write(*,'(A, I3, I3, I3, F12.1, F8.3)') "#PRIM ",
      *   incident%p%code, incident%p%subcode, incident%p%charge,
      *   incident%p%fm%p(4), incident%vec%coszenith
 
 !      npart = 0  ! npart(i,j) = 0 (i = 1,..., j = 1,...)
       
-      write(*,'(A)') 'BEGIN_EVENT'
+      write(*,'(A)') '#BEGIN_EVENT'
       end
   
 
@@ -97,23 +96,38 @@
 !                           2 ==> reached at an observation level
 !                           3 ==> reached at inner boundery.
       type(track):: aTrack
+      type(coord):: angle
+      type(track):: incident
 
       integer::i
-      integer:: pdgcode  ! ptcl code by PDG M.C 
+      integer:: pcode    ! particle code of CosmosX
+      integer:: pdgcode
+      integer:: pdgcodein  ! ptcl code by PDG M.C 
       real*4 t
 
 !     For id=2, you need not output the z values, z's are basically the same;
 !     it is "distance from the  baseL layer - 1cm" so if the observation layer
 !     is the baseL,  the value is about -1cm. 
 
+      pcode = aTrack%p%code
+
       if (id .eq. 2) then
-             call ccos2pdg(aTrack%p, pdgcode)
-!      if ( (pdgcode.eq.13).or. (pdgcode.eq.-13) ) then
+             
+!     Selection of muons(3), kaons(4) and pions(5)             
+         if ( pcode .eq. 3 .or. pcode .eq. 4 .or. pcode .eq. 5 ) then
+
+            ! Incident particle 
+            call cqIncident(incident, angle)
+            call ccos2pdg(incident%p, pdgcodein)
+
+            ! CosmosX PID -> PDG code 
+            call ccos2pdg(aTrack%p, pdgcode)
              t = aTrack%t + ObsSites(aTrack%where)%minitime/c *Tonsec
 
-             write(*, '(3i3, i12, 1p, 8g15.4, g17.9)')
+            write(*,'(4i4,i12,e16.8,3g10.4,5e16.8,i12,4e16.8,e16.8)')
      *            aTrack%where,  
      *            aTrack%p%code, 
+     *            aTrack%p%subcode,
      *            aTrack%p%charge, 
      *            pdgcode,
      *            aTrack%p%fm%p(4)-aTrack%p%mass, 
@@ -121,8 +135,13 @@
      *            aTrack%pos%xyz%r(3),
      *            aTrack%p%fm%p(1), aTrack%p%fm%p(2), 
      *            aTrack%p%fm%p(3),
-     *            aTrack%t, t
-!      endif  
+     *            aTrack%t, t,
+     *            pdgcodein, 
+     *            incident%p%fm%p(4)-incident%p%mass, 
+     *            incident%p%fm%p(1),
+     *            incident%p%fm%p(2), incident%p%fm%p(3),
+     *            incident%vec%coszenith
+         endif  
       endif
 
       end
@@ -133,7 +152,7 @@
 !    *
       subroutine chookEnEvent
       
-      write(*,'(A)') 'END_EVENT'
+      write(*,'(A)') '#END_EVENT'
       end
 
 
