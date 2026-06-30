@@ -1,6 +1,33 @@
 # ASMC-InclinedMuon
 Example for inclined muon bundle studies 
 
+# Compile cosmosapp 
+
+```
+cd (COSMOS-INSTALL DIRECTORY)
+./Scrpt/CompileExampleByCMake.sh (Your repository path)/ASMC-InclinedMuon/cosmosapp/
+```
+
+# Execute cosmosapp 
+
+## Perparation 
+Before the execution, please setup the enviromental variables as 
+```
+cd (COSMOS-INSTALL DIRECTORY)
+source Scrpt/SetEnvironment.sh
+```
+It is needed to be done only once in the terminal. These variables can be set manually as 
+```
+LIBLOFT=/Users/menjo/Workspace/MCshower/CosmosX_0.09/LibLoft
+COSMOSTOP=/Users/menjo/Workspace/MCshower/CosmosX_0.09/Cosmos
+```
+
+## Execute 
+```
+cd (Your repository path)/ASMC-InclinedMuon/cosmosapp/
+./cosmosLinuxGfort < param > out.txt
+```
+
 
 # Cosmos App output 
 
