@@ -3,9 +3,9 @@
  LongitOfSite = 90.53
  YearOfGeomag = 2019.500
 
- DepthList =  2000 4000 6000 8000 0
+ DepthList =  -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0
 ! DepthList = -3000 -4000 -6000 -10000 0
-! HeightList =  6000.0 4000.0 2000.0 .0 .0 .0 .0 .0 .0 .0 .0 .0 .0 .0 .0 .0 .0 .0 .0
+ HeightList =  1350.0 1300. 1200. 1100. 1000.0 900.0 800.0 700.0 600.0 500.0 400.0 350.0 300.0 .0 
  ASDepthList = 2000 4000.0 6000.0 8000.0  .0 .0 .0 .0 .0 .0 .0 .0
 ! ASDepthList = -10000  -4000.0 -2000.0 -1000.0
 ! ASHeightList =  6000.0 4000.0 2000.0 .0 .0 .0 .0
@@ -22,7 +22,8 @@ CosZenith = (0.0, 0.34)
 Azimuth = (0.0,360.0)
 ! Azimuth = (45.0,45.0)
  HeightOfInj = 100.0e3
- DestEventNo = 1000 2
+! Number of Events for MC generartion
+ DestEventNo = 100 
 
 ! Generate ='em/as'
 ! Generate ='em'
