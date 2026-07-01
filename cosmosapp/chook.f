@@ -149,8 +149,8 @@
             call ccos2pdg(aTrack%p, pdgcode)
              t = aTrack%t + ObsSites(aTrack%where)%minitime/c *Tonsec
 
-            write(*,'(i10,4i4,i12,e18.8,3g12.4,5e16.8,
-     *            i12,4e16.8,g16.8,3g16.8)')
+            write(*,'(i10,4i4,i12,e18.8,3f14.4,5e17.8,
+     *            i12,4e16.8,f15.10,3f15.10)')
      *            nevent,
      *            aTrack%where,  
      *            aTrack%p%code, 

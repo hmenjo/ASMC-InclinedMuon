@@ -28,6 +28,17 @@ cd (Your repository path)/ASMC-InclinedMuon/cosmosapp/
 ./cosmosLinuxGfort < param > out.txt
 ```
 
+Roughly 100 events per 2 hours and 1 CPU. 
+The paramters for this MC generation are given in the text file "param". Only parameters should be related to this study are listed below. Please refer the COSMOS manual for the other parameters. 
+- 
+
+
+
+In addtion, "primary", the file name is specified in "param", specifies the energies (or spectrum) and compositions of the primary cosmic-rays. 
+
+
+
+
 
 # Cosmos App output 
 
