@@ -136,7 +136,7 @@
       if (id .eq. 2) then
              
 !     Selection of muons(3), kaons(4) and pions(5)             
-         if ( pcode .eq. 3 .or. pcode .eq. 4 .or. pcode .eq. 5 ) then
+!         if ( pcode .eq. 3 .or. pcode .eq. 4 .or. pcode .eq. 5 ) then
 
             ! event number 
             call cqEventNo(nevent, ntevent)
@@ -169,7 +169,7 @@
      *            incident%p%fm%p(2), incident%p%fm%p(3),
      *            incident%vec%coszenith,
      *            angle%r(1),angle%r(2),angle%r(3)
-         endif  
+!         endif  
       endif
 
       end
