@@ -30,14 +30,19 @@ cd (Your repository path)/ASMC-InclinedMuon/cosmosapp/
 
 Roughly 100 events per 2 hours and 1 CPU. 
 The paramters for this MC generation are given in the text file "param". Only parameters should be related to this study are listed below. Please refer the COSMOS manual for the other parameters. 
-- 
 
-
+- HeightList : specification of observation layers in hight [m]. You can specify the layers using DepthList [kg/m^3] also. The parameters in DepthList are prioritized over HeightList. To disable DepthList, "-1" must be listed in DepthList.
+- InitRN : Rundom seed. If negative number like -1 is specify, the cpu time is automatically used. 
+- CosZenith : Range of Zenith angle for event generations. (cos theta)
+- Azimuth : Range of Azimuthal angle for event generations [degree]
+- HeightOfInj : Injection height of sperified parimary cosmic-rays [m]
+- DestEventNo : Number of events for the generation 
+- Generate : treatment of EM components 'em'=fully simulate (do tracking), 'as'=use cascade equation (skip tracking)
+- IntModel : Hadronic interaction model. multiple modules can be specifyed with giving threshold energy of model-swithing. '"phits" 2.0 "dpmjet3" 80 "qgsjet2"' -> Use Phits E<2GeV, Dpmjet3 2< E <80GeV, Qgsjet2 E>80GeV
+- KEminObs : Minimum energy of particles considered for observation. It corresponds to the minimum energy of tracking also. To speed up the calculation, it should be increased. 
+- ObsPlane : Type of the coordinate system for outputs of observation 
 
 In addtion, "primary", the file name is specified in "param", specifies the energies (or spectrum) and compositions of the primary cosmic-rays. 
-
-
-
 
 
 # Cosmos App output 
@@ -81,13 +86,18 @@ In addtion, "primary", the file name is specified in "param", specifies the ener
 - t : arrival time [ns] of absolute time from the incident.
 - pdgcodein : pdg code of incident particle
 - incident%p%fm%p(4)-incident%p%mass : Kinetic energy of incident particle [GeV]
-- incident%p%fm%p(1) : px in Earth coordinate [GeV/c]
+- incident%p%fm%p(1) : px of incident particle in Earth coordinate [GeV/c]
 - incident%p%fm%p(2) : py in Earth coordinate [GeV/c]
 - incident%p%fm%p(3) : pz in Earth coordinate [GeV/c]
 - incident%vec%coszenith : cos(Zenith angle) in the coordinate of the observation layer
 - angle*r(1) : x component of unit direction vertor in the primary plan (= deepest observation layer coordinate)
 - angle*r(2) : y component of unit direction vertor in the primary plan (= deepest observation layer coordinate)
 - angle*r(3) : z component of unit direction vertor (=cos(zenith angle)) in the primary plan (= deepest observation layer coordinate)
+
+# Note 
+- For neutrino primary (no neutrino interaction is implemented in COSMOS), specify it as "neu_e" in the primary file. This neutrino inident may help you to debug and check this application.
+
+
 
 
 
