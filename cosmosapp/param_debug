@@ -1,13 +1,13 @@
  &PARAM
- !LatitOfSite = 30.110000
- !LongitOfSite = 90.53
- LatitOfSite = 90.0000
- LongitOfSite = 0.0
+ LatitOfSite = 30.110000
+ LongitOfSite = 90.53
+ !LatitOfSite = 90.0000
+ !LongitOfSite = 00.0
  YearOfGeomag = 2019.500
 
- DepthList =  -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0
+ DepthList =  -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0
 ! DepthList = -3000 -4000 -6000 -10000 0
- HeightList =  1350.0 1300. 1200. 1100. 1000.0 900.0 800.0 700.0 600.0 500.0 400.0 350.0 300.0 .0 
+ HeightList =  50000. 1350.0 1300. 1200. 1100. 1000.0 900.0 800.0 700.0 600.0 500.0 400.0 350.0 300.0 .0 
  ASDepthList = 2000 4000.0 6000.0 8000.0  .0 .0 .0 .0 .0 .0 .0 .0
 ! ASDepthList = -10000  -4000.0 -2000.0 -1000.0
 ! ASHeightList =  6000.0 4000.0 2000.0 .0 .0 .0 .0
@@ -20,9 +20,9 @@
 ! CosZenith = (0.0, 0.34) 
 ! Vertical incident 
 ! CosZenith = (1.0, 1.0) 
-CosZenith = (0.3, 0.3) 
+CosZenith = (0.9, 0.9) 
 ! Azimuth = (0.0,360.0)
-Azimuth = (0.0,10.0)
+Azimuth = (0.0,0.0)
  HeightOfInj = 150.0e3
 ! Number of Events for MC generartion
  DestEventNo = 10 
@@ -51,8 +51,8 @@ Azimuth = (0.0,10.0)
  Freec = T
  Hidden = F
  Job = ' '   ! This is comment after input data
- ObsPlane = 3
-! ObsPlane = 1
+! ObsPlane = 3
+ ObsPlane = 1
  OneDim = 0
  SkeletonFile = 'SkeletonParam '
  SourceDec = 30.0

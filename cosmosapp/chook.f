@@ -125,7 +125,11 @@
       integer:: pdgcode
       integer:: pdgcodein  ! ptcl code by PDG M.C 
       real*4 t
+      real*8:: mom, wx, wy, wz
+      real*8:: pmom, pwx, pwy, pwz
       integer nevent, ntevent
+
+      type(coord):: pos_det, dir_det
 
 !     For id=2, you need not output the z values, z's are basically the same;
 !     it is "distance from the  baseL layer - 1cm" so if the observation layer
@@ -147,30 +151,52 @@
 
             ! CosmosX PID -> PDG code 
             call ccos2pdg(aTrack%p, pdgcode)
-             t = aTrack%t + ObsSites(aTrack%where)%minitime/c *Tonsec
+            t = aTrack%t + ObsSites(aTrack%where)%minitime/c *Tonsec
 
-            write(*,'(i10,4i4,i12,e18.8,3f14.4,5e17.8,
-     *            i12,4e16.8,f15.10,3f15.10)')
+            ! Convert the position from earch to local coordinate 
+            !call cxyz2det(aTrack%where, aTrack%pos%xyz, pos_det)
+            ! Convert the direction from earch to local coordinate
+            !call cxyz2detD(aTrack%where, aTrack%vec%w, dir_det)
+
+            mom = sqrt(aTrack%p%fm%p(1)**2 + aTrack%p%fm%p(2)**2 
+     *       + aTrack%p%fm%p(3)**2)
+            wx = aTrack%p%fm%p(1)/mom
+            wy = aTrack%p%fm%p(2)/mom
+            wz = aTrack%p%fm%p(3)/mom
+
+            pmom = sqrt(incident%p%fm%p(1)**2 + incident%p%fm%p(2)**2
+     *       + incident%p%fm%p(3)**2)
+            pwx = incident%p%fm%p(1)/pmom
+            pwy = incident%p%fm%p(2)/pmom
+            pwz = incident%p%fm%p(3)/pmom
+
+            write(*,'(i10,4i4,i12,e18.8,15f20.9,
+     *            2e17.8,i12,e18.8,7f20.9)')
      *            nevent,
      *            aTrack%where,  
      *            aTrack%p%code, 
      *            aTrack%p%subcode,
      *            aTrack%p%charge, 
      *            pdgcode,
-     *            aTrack%p%fm%p(4)-aTrack%p%mass, 
-     *            aTrack%pos%xyz%r(1), aTrack%pos%xyz%r(2), 
+     *            aTrack%p%fm%p(4)-aTrack%p%mass,
+     *            aTrack%pos%xyz%r(1), aTrack%pos%xyz%r(2),
      *            aTrack%pos%xyz%r(3),
-     *            aTrack%p%fm%p(1), aTrack%p%fm%p(2), 
-     *            aTrack%p%fm%p(3),
+     *            wx, wy ,wz,
+     *            aTrack%vec%w%r(1), aTrack%vec%w%r(2),
+     *            aTrack%vec%w%r(3),
+     *            pos_det%r(1), pos_det%r(2), pos_det%r(3),   
+     *            dir_det%r(1), dir_det%r(2), dir_det%r(3),
      *            aTrack%t, t,
      *            pdgcodein, 
      *            incident%p%fm%p(4)-incident%p%mass, 
-     *            incident%p%fm%p(1),
-     *            incident%p%fm%p(2), incident%p%fm%p(3),
+     *            pwx, pwy, pwz,
      *            incident%vec%coszenith,
      *            angle%r(1),angle%r(2),angle%r(3)
 !         endif  
       endif
+
+
+
 
       end
 
