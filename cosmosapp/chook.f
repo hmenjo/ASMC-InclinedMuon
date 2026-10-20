@@ -10,6 +10,13 @@
 !     in $COSMOSTOP/cosmos/        
 !!! #include "cmyEfield.f" not needed now
 !!! #include "cmyBfield.f" not needed now
+
+!     textout: reproduce the original per-particle stdout.
+!     Set COSMOS_STDOUT=1 (or T/Y) before the run.
+      module chook_debug
+      implicit none
+      logical:: textout = .false.
+      end module chook_debug
       
 !  *************************************** hook for Beginning of a Run
 !  * At this moment, all (system-level) initialization for this run
@@ -18,6 +25,8 @@
 !     *
 
       subroutine chookBgRun
+      use chook_hdf5
+      use chook_debug
       implicit none
 #include "Zmanagerp.h"
 #include "Ztrack.h"
@@ -29,6 +38,8 @@
       real(8):: oldv
       integer:: icon
       integer:: i
+      integer:: stdoutstat
+      character(len=8):: stdoutflag
       
 !            namelist output
       call cwriteParam(ErrorOut, 0)
@@ -43,6 +54,22 @@
       call epResetEcrit(0, "Air", 81.0d-3, oldv, icon)
       write(0,*) 'icon=',icon,'Default Ecrit oldv(MeV)=', oldv*1000,
      * ' has been reset to ', 81, ' MeV'
+
+      call get_environment_variable('COSMOS_STDOUT',
+     *   stdoutflag, status=stdoutstat)
+      textout = .false.
+      if (stdoutstat .eq. 0) then
+         if (stdoutflag(1:1).eq.'1' .or.
+     *       stdoutflag(1:1).eq.'T' .or.
+     *       stdoutflag(1:1).eq.'t' .or.
+     *       stdoutflag(1:1).eq.'Y' .or.
+     *       stdoutflag(1:1).eq.'y') textout = .true.
+      endif
+      if (textout) write(0,*)
+     *   'Debug: original particle stdout is enabled'
+
+      call chook_h5_open(LatitOfSite, LongitOfSite, DtGMT,
+     *   YearOfGeomag)
 
       write(*, '(a,g8.3,a,g8.3,a,g8.3,2a,g8.3)') 
      *  '# Latitude=', sngl(LatitOfSite), 
@@ -61,6 +88,13 @@
      *       ObsSites(i)%pos%depth*0.1, ObsSites(i)%pos%height, 
      *       ObsSites(i)%pos%radiallen/1000., 
      *       ObsSites(i)%pos%xyz%r(1:3)
+         call chook_h5_add_site(i,
+     *      ObsSites(i)%pos%depth*0.1d0,
+     *      ObsSites(i)%pos%height,
+     *      ObsSites(i)%pos%radiallen/1000.d0,
+     *      ObsSites(i)%pos%xyz%r(1),
+     *      ObsSites(i)%pos%xyz%r(2),
+     *      ObsSites(i)%pos%xyz%r(3))
       enddo
       end
 
@@ -70,25 +104,44 @@
 !     *  After this is executed, event generation starts.
 !     *
       subroutine chookBgEvent
+      use modCodeConv
+      use chook_hdf5
+      implicit none
 #include "Ztrack.h"
 #include "Zcode.h"
 
       type(coord):: angle
       type(track):: incident
-      integer:: pdgcode 
+      integer:: pdgcode
+      integer:: nevent, ntevent
+      integer:: icode, isub, ichg
+      real(8):: etot, ekin, px, py, pz
 
       call cqIncident(incident, angle)
-!      call ccos2pdg(incident%p, pdgcode)
+      call ccos2pdg(incident%p, pdgcode)
+      call cqEventNo(nevent, ntevent)
+
+      icode = incident%p%code
+      isub = incident%p%subcode
+      ichg = incident%p%charge
+      etot = incident%p%fm%p(4)
+      ekin = etot - incident%p%mass
+      px = incident%p%fm%p(1)
+      py = incident%p%fm%p(2)
+      pz = incident%p%fm%p(3)
 
 !      write(0,*) '1ry c,subc,chg, TE   cos-zenith '
       write(*,'(A, I3, I3, I3, F12.1, F8.3, 3F10.5)') 
      *   "#PRIM ",
-     *   incident%p%code, incident%p%subcode, incident%p%charge,
-     *   incident%p%fm%p(4), incident%vec%coszenith, 
+     *   icode, isub, ichg,
+     *   etot, incident%vec%coszenith, 
      *   angle%r(1),angle%r(2),angle%r(3)
 
-!      npart = 0  ! npart(i,j) = 0 (i = 1,..., j = 1,...)
-      
+      call chook_h5_begin_event(nevent, icode, isub, ichg,
+     *   pdgcode, etot, ekin, px, py, pz,
+     *   incident%vec%coszenith,
+     *   angle%r(1), angle%r(2), angle%r(3))
+
       write(*,'(A)') '#BEGIN_EVENT'
       end
   
@@ -98,7 +151,9 @@
 !     *  All information of the particle is in aTrack
 !     *
       subroutine chookObs(aTrack, id)
-      use modCodeConv   
+      use modCodeConv
+      use chook_hdf5
+      use chook_debug
 !   
 !     Note that every real variable is in double  precision so
 !     that you may output it in sigle precision to save the memory.
@@ -120,12 +175,13 @@
       type(coord):: angle
       type(track):: incident
 
-      integer::i
       integer:: pcode    ! particle code of CosmosX
       integer:: pdgcode
-      integer:: pdgcodein  ! ptcl code by PDG M.C 
+      integer:: pdgcodein
+      integer:: iwhere, icode, isub, ichg
+      integer:: nevent, ntevent
+      real(8):: ekin, tns
       real*4 t
-      integer nevent, ntevent
 
 !     For id=2, you need not output the z values, z's are basically the same;
 !     it is "distance from the  baseL layer - 1cm" so if the observation layer
@@ -138,40 +194,49 @@
 !     Selection of muons(3), kaons(4) and pions(5)             
          if ( pcode .eq. 3 .or. pcode .eq. 4 .or. pcode .eq. 5 ) then
 
-            ! event number 
-            call cqEventNo(nevent, ntevent)
-
-            ! Incident particle 
-            call cqIncident(incident, angle)
-            call ccos2pdg(incident%p, pdgcodein)
-
-            ! CosmosX PID -> PDG code 
+            ! CosmosX PID -> PDG code
             call ccos2pdg(aTrack%p, pdgcode)
-             t = aTrack%t + ObsSites(aTrack%where)%minitime/c *Tonsec
+            tns = aTrack%t
+     *         + ObsSites(aTrack%where)%minitime/c*Tonsec
+            iwhere = aTrack%where
+            icode = aTrack%p%code
+            isub = aTrack%p%subcode
+            ichg = aTrack%p%charge
+            ekin = aTrack%p%fm%p(4) - aTrack%p%mass
+            call chook_h5_fill(iwhere, icode, isub, ichg,
+     *         pdgcode, ekin,
+     *         aTrack%pos%xyz%r(1), aTrack%pos%xyz%r(2),
+     *         aTrack%pos%xyz%r(3),
+     *         aTrack%p%fm%p(1), aTrack%p%fm%p(2),
+     *         aTrack%p%fm%p(3),
+     *         aTrack%t, tns, aTrack%user)
 
-            write(*,'(i10,4i4,i12,e18.8,3f14.4,5e17.8,
+            if (textout) then
+               call cqEventNo(nevent, ntevent)
+               call cqIncident(incident, angle)
+               call ccos2pdg(incident%p, pdgcodein)
+               t = tns
+               write(*,'(i10,4i4,i12,e18.8,3f14.4,6e17.8,
      *            i12,4e16.8,f15.10,3f15.10)')
      *            nevent,
-     *            aTrack%where,  
-     *            aTrack%p%code, 
+     *            aTrack%where,
+     *            aTrack%p%code,
      *            aTrack%p%subcode,
-     *            aTrack%p%charge, 
+     *            aTrack%p%charge,
      *            pdgcode,
-     *            aTrack%p%fm%p(4)-aTrack%p%mass, 
-     *            aTrack%pos%xyz%r(1), aTrack%pos%xyz%r(2), 
+     *            aTrack%p%fm%p(4)-aTrack%p%mass,
+     *            aTrack%pos%xyz%r(1), aTrack%pos%xyz%r(2),
      *            aTrack%pos%xyz%r(3),
-     *            aTrack%p%fm%p(1), aTrack%p%fm%p(2), 
+     *            aTrack%p%fm%p(1), aTrack%p%fm%p(2),
      *            aTrack%p%fm%p(3),
-!     *            aTrack%vec%w%r(1),
-!     *            aTrack%vec%w%r(2),
-!     *            aTrack%vec%w%r(3),
-     *            aTrack%t, t,
-     *            pdgcodein, 
-     *            incident%p%fm%p(4)-incident%p%mass, 
+     *            aTrack%t, t, aTrack%user,
+     *            pdgcodein,
+     *            incident%p%fm%p(4)-incident%p%mass,
      *            incident%p%fm%p(1),
      *            incident%p%fm%p(2), incident%p%fm%p(3),
      *            incident%vec%coszenith,
      *            angle%r(1),angle%r(2),angle%r(3)
+            endif
          endif  
       endif
 
@@ -182,7 +247,8 @@
 !    * At this moment, 1 event generation has been ended.
 !    *
       subroutine chookEnEvent
-      
+      use chook_hdf5
+      call chook_h5_end_event
       write(*,'(A)') '#END_EVENT'
       end
 
@@ -191,6 +257,8 @@
 !     *  all events have been created or time lacks
 !     *
       subroutine chookEnRun
+      use chook_hdf5
+      call chook_h5_close
       end
 
       

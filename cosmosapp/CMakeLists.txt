@@ -185,6 +185,14 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(${LIBLOFTINC})
 include_directories(${LIBLOFTINC}/BlockData)
 include_directories(${COSMOSINC})
+
+### HDF5 tables: one compound dataset per event
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(HDF5_HL_FORTRAN REQUIRED hdf5_hl_fortran)
+pkg_check_modules(HDF5_HL REQUIRED hdf5_hl)
+include_directories(${HDF5_HL_FORTRAN_INCLUDE_DIRS})
+link_directories(${HDF5_HL_FORTRAN_LIBRARY_DIRS} ${HDF5_HL_LIBRARY_DIRS})
+
 set (CMAKE_Fortran_MODULE_DIRECTORY "${SHOWERMCTOP}/lib/${ARCH}")
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${SHOWERMCTOP}/lib/${ARCH}")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${SHOWERMCTOP}/lib/${ARCH}")
@@ -192,5 +200,6 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
 set (LIBSHOWERMC showermc)
 link_directories("${SHOWERMCTOP}/lib/${ARCH}")
 
-add_executable(cosmos${ARCH} chook.f)
-target_link_libraries(cosmos${ARCH} ${LIBSHOWERMC})
+add_executable(cosmos${ARCH} chook_hdf5.f90 chook.f)
+target_link_libraries(cosmos${ARCH} ${LIBSHOWERMC}
+  ${HDF5_HL_FORTRAN_LIBRARIES} ${HDF5_HL_LIBRARIES})

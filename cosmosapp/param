@@ -12,7 +12,7 @@
 
  SeedFile = 'Seed'
  InitRN = 300798  -3319907
- Primary = 'primary'
+ PrimaryFile = 'primary'
 ! PrimaryFile = '/userdata/work/saito/MuonAnalysis/CosmosX_0.09/ASMC-InclinedMuon/cosmosapp/primary'
 ! PrimaryFile = 'primary_e'
 ! Zenith 70-90 degrees 

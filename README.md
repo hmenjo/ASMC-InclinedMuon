@@ -8,6 +8,12 @@ cd (COSMOS-INSTALL DIRECTORY)
 ./Scrpt/CompileExampleByCMake.sh (Your repository path)/ASMC-InclinedMuon/cosmosapp/
 ```
 
+In addtion to COSMOS installation, please install HDF5 library. In case of CentOS or AlmaLinux.
+```
+sudo dnf install epel-release
+sudo dnf install hdf5 hdf5-devel
+```
+
 # Execute cosmosapp 
 
 ## Perparation 
@@ -25,6 +31,8 @@ export COSMOSTOP=/Users/menjo/Workspace/MCshower/CosmosX_0.09/Cosmos
 ## Execute 
 ```
 cd (Your repository path)/ASMC-InclinedMuon/cosmosapp/
+export COSMOS_H5OUT='run01.h5'  # output filename for HDF5 
+export COSMOS_STDOUT=1          # 1: w/ std output for debug, 0: w/o
 ./cosmosLinuxGfort < param > out.txt
 ```
 
@@ -60,36 +68,51 @@ To stop the tracking of particles with lower energies, the following lines shoul
 The KEminObs parameter works only for EM components. To apply the energy threshold of tracking for hadrons, threshold value for each particle type should be specified. KEminObs(x) : threshold for particle code x, it means that Energy threshold for pions, kaons, nucleons are KEminObs(4), KEminObs(5), KEminObs(6) respectively. 
 
 
-# Cosmos App output 
+# Cosmos App output
+
+Two outputs are produced. HDF5 is always written. The original per-particle text is written only when debug stdout is turned on.
 
 ```
-            write(*,'(i10,4i4,i12,e18.8,3g12.4,5e16.8,
-     *            i12,4e16.8,g16.8,3g16.8)')
+export COSMOS_H5OUT=run01.h5
+export COSMOS_STDOUT=1
+./cosmosLinuxGfort < param > out.txt
+```
+
+`COSMOS_STDOUT` accepts `1`, `T`, `t`, `Y`, or `y`. Leave it unset for a normal run. `COSMOS_H5OUT` selects the HDF5 path. The default file is `cosmos.h5` in the working directory, and an existing file is replaced at the start of the run.
+
+## Standard output
+
+The redirected text always contains the observation-site list, one `#PRIM` line, `#BEGIN_EVENT`, and `#END_EVENT`. With `COSMOS_STDOUT` set, each selected particle is also written between `#BEGIN_EVENT` and `#END_EVENT`, in the original format:
+
+```
+            write(*,'(i10,4i4,i12,e18.8,3f14.4,6e17.8,
+     *            i12,4e16.8,f15.10,3f15.10)')
      *            nevent,
-     *            aTrack%where,  
-     *            aTrack%p%code, 
+     *            aTrack%where,
+     *            aTrack%p%code,
      *            aTrack%p%subcode,
-     *            aTrack%p%charge, 
+     *            aTrack%p%charge,
      *            pdgcode,
-     *            aTrack%p%fm%p(4)-aTrack%p%mass, 
-     *            aTrack%pos%xyz%r(1), aTrack%pos%xyz%r(2), 
+     *            aTrack%p%fm%p(4)-aTrack%p%mass,
+     *            aTrack%pos%xyz%r(1), aTrack%pos%xyz%r(2),
      *            aTrack%pos%xyz%r(3),
-     *            aTrack%p%fm%p(1), aTrack%p%fm%p(2), 
+     *            aTrack%p%fm%p(1), aTrack%p%fm%p(2),
      *            aTrack%p%fm%p(3),
-     *            aTrack%t, t,
-     *            pdgcodein, 
-     *            incident%p%fm%p(4)-incident%p%mass, 
+     *            aTrack%t, t, aTrack%user,
+     *            pdgcodein,
+     *            incident%p%fm%p(4)-incident%p%mass,
      *            incident%p%fm%p(1),
      *            incident%p%fm%p(2), incident%p%fm%p(3),
      *            incident%vec%coszenith,
      *            angle%r(1),angle%r(2),angle%r(3)
 ```
 
-- nevent : event ID 
+- nevent : event ID
 - aTrack%where : ID of observation layer (starting from 1)
-- aTrack%p%code : Detected particl-type ID (COSMOSX)
+- aTrack%p%code : Detected particle-type ID (COSMOSX)
+- aTrack%p%subcode : subcode of the detected particle
 - aTrack%p%charge : Charge of detected particle
-- pdgcode : PDG code of detected partcle 
+- pdgcode : PDG code of detected particle
 - aTrack%p%fm%p(4)-aTrack%p%mass : Kinetic Energy [GeV]
 - aTrack%pos%xyz%r(1) : x position [m] (Local coordinate of the observation layer)
 - aTrack%pos%xyz%r(2) : y position [m] (Local coordinate of the observation layer)
@@ -98,16 +121,61 @@ The KEminObs parameter works only for EM components. To apply the energy thresho
 - aTrack%p%fm%p(2) : py [GeV/c] (Local coordinate of the observation layer)
 - aTrack%p%fm%p(3) : pz [GeV/c] (Local coordinate of the observation layer)
 - aTrack%t : arrival time of particle [ns] (offset of observation layer is considered)
-- t : arrival time [ns] of absolute time from the incident.
+- t : arrival time [ns] of absolute time from the incident
+- aTrack%user : user-defined value carried on the track
 - pdgcodein : pdg code of incident particle
 - incident%p%fm%p(4)-incident%p%mass : Kinetic energy of incident particle [GeV]
 - incident%p%fm%p(1) : px of incident particle in Earth coordinate [GeV/c]
 - incident%p%fm%p(2) : py in Earth coordinate [GeV/c]
 - incident%p%fm%p(3) : pz in Earth coordinate [GeV/c]
 - incident%vec%coszenith : cos(Zenith angle) in the coordinate of the observation layer
-- angle*r(1) : x component of unit direction vertor in the primary plan (= deepest observation layer coordinate)
-- angle*r(2) : y component of unit direction vertor in the primary plan (= deepest observation layer coordinate)
-- angle*r(3) : z component of unit direction vertor (=cos(zenith angle)) in the primary plan (= deepest observation layer coordinate)
+- angle%r(1) : x component of unit direction vector in the primary plane (= deepest observation layer coordinate)
+- angle%r(2) : y component of unit direction vector in the primary plane (= deepest observation layer coordinate)
+- angle%r(3) : z component of unit direction vector (=cos(zenith angle)) in the primary plane (= deepest observation layer coordinate)
+
+`#PRIM` is one line per event:
+
+```
+#PRIM   code subcode charge  total_energy  coszenith  dir_x dir_y dir_z
+```
+
+## HDF5
+
+HDF5 is written for every run, whether or not `COSMOS_STDOUT` is set.
+
+- File attributes: `latitude_deg`, `longitude_deg`, `dt_gmt_hours`, `year_geomag`
+- `/obs_sites`: one row per observation layer (`id`, `depth_g_cm2`, `height_m`, `radial_km`, `x_m`, `y_m`, `z_m`)
+- `/event_NNNNNNNN`: one HDF5 table per event. `NNNNNNNN` is the event number.
+
+The incident particle (the former `#PRIM` line, plus PDG code, kinetic energy and momentum) is stored as attributes of `/event_NNNNNNNN`:
+
+- `event`, `code`, `subcode`, `charge`, `pdg`
+- `energy_gev`: total energy `p(4)` [GeV]
+- `ke_gev`: kinetic energy [GeV]
+- `px_gev`, `py_gev`, `pz_gev`: momentum in the Earth coordinate [GeV/c]
+- `coszenith`
+- `dir_x`, `dir_y`, `dir_z`: unit direction vector in the primary plane
+- `nparticles`: number of rows, written when the event finishes
+
+Each selected particle (muons, kaons, pions at an observation level) is one row:
+
+- `where`: observation layer id, starting from 1
+- `code`, `subcode`, `charge`: COSMOS particle code
+- `pdg`: PDG code
+- `ke_gev`: kinetic energy [GeV]
+- `x_m`, `y_m`, `z_m`: position [m] in the observation-layer coordinate
+- `px_gev`, `py_gev`, `pz_gev`: momentum [GeV/c] in that coordinate
+- `t`: `aTrack%t`
+- `t_ns`: `aTrack%t + minitime/c*Tonsec`
+- `user`: `aTrack%user`
+
+```python
+import h5py
+with h5py.File("cosmos.h5", "r") as f:
+    table = f["event_00000001"]
+    print(table.attrs["pdg"], table.attrs["energy_gev"])
+    print(table["where"][:], table["ke_gev"][:])
+```
 
 # Note 
 - For neutrino primary (no neutrino interaction is implemented in COSMOS), specify it as "neu_e" in the primary file. This neutrino inident may help you to debug and check this application.
