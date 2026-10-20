@@ -5,7 +5,7 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-run_number=`printf "%04d" $1`
+run_number=`printf "%07d" $1`
 export COSMOS_H5OUT=run${run_number}.h5 # output file name
-#export COSMOS_STDOUT=1 # stdout to file
-time ./cosmosLinuxGfort < param > run${run_number}.out &> run${run_number}.log # run the program    
+export COSMOS_STDOUT=1 # stdout to file
+time ./cosmosLinuxGfort < param > run${run_number}.out 2> run${run_number}.log # run the program    

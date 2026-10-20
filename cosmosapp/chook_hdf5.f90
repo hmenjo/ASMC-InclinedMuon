@@ -27,7 +27,8 @@ module chook_hdf5
   integer, parameter :: nobs_fields = 15
   integer, parameter :: nsite_fields = 7
   integer, parameter :: name_len = 16
-  integer(hsize_t), parameter :: chunk_rows = 2048_hsize_t
+  integer(hsize_t), parameter :: chunk_rows = 256_hsize_t
+  integer(c_int), parameter :: gzip_level = 6_c_int
 
   type, bind(c) :: obs_record
     integer(c_int) :: where
@@ -343,7 +344,7 @@ contains
     herr = h5tbmake_table_c(ctitle, int(file_id, c_int64_t), cdset, &
          int(nfields, c_size_t), 0_c_size_t, int(type_size, c_size_t), &
          c_loc(ptrs), c_loc(offsets), c_loc(types), &
-         int(chunk_rows, c_size_t), c_null_ptr, 0_c_int, c_null_ptr)
+         int(chunk_rows, c_size_t), c_null_ptr, gzip_level, c_null_ptr)
     if (herr < 0) call check("H5TBmake_table", int(herr))
   end subroutine make_table
 
