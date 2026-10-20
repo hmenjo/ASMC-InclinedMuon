@@ -12,18 +12,19 @@
 
  SeedFile = 'Seed'
  InitRN = 300798  -3319907
- PrimaryFile = 'primary'
+ PrimaryFile = '/userdata/work/saito/MuonAnalysis/CosmosX_0.09/ASMC-InclinedMuon/cosmosapp/primary'
 ! PrimaryFile = 'primary_e'
 ! Zenith 70-90 degrees 
-CosZenith = (0.0, 0.34) 
+CosZenith = (0.0, 1.0) 
+! CosZenith = (0.0, 0.34) 
 ! Vertical incident 
 ! CosZenith = (1.0, 1.0) 
 ! CosZenith = (0.8, 0.8) 
 Azimuth = (0.0,360.0)
-! Azimuth = (45.0,45.0)
+!Azimuth = (0,10.0)
  HeightOfInj = 100.0e3
 ! Number of Events for MC generartion
- DestEventNo = 100 
+DestEventNo = 100
 
 ! Generate ='em/as'
 ! Generate ='em'
@@ -49,7 +50,8 @@ Azimuth = (0.0,360.0)
  Freec = T
  Hidden = F
  Job = ' '   ! This is comment after input data
- ObsPlane = 1
+ ObsPlane = 3
+ !ObsPlane = 1
  OneDim = 0
  SkeletonFile = 'SkeletonParam '
  SourceDec = 30.0
@@ -60,7 +62,9 @@ Azimuth = (0.0,360.0)
  TraceDir = './'
  WaitRatio = 0.01
  Within = 99999
- Za1ry = 'cos 1'
+ Za1ry = 'is'
+ !Za1ry = 'cos 1'
+ !changed by saito
  &END
  
 
