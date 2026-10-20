@@ -7,7 +7,7 @@
 
  DepthList =  -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0
 ! DepthList = -3000 -4000 -6000 -10000 0
- HeightList =  50000. 1350.0 1300. 1200. 1100. 1000.0 900.0 800.0 700.0 600.0 500.0 400.0 350.0 300.0 .0 
+ HeightList =  10000. 1350.0 1300. 1200. 1100. 1000.0 900.0 800.0 700.0 600.0 500.0 400.0 350.0 300.0 .0 
  ASDepthList = 2000 4000.0 6000.0 8000.0  .0 .0 .0 .0 .0 .0 .0 .0
 ! ASDepthList = -10000  -4000.0 -2000.0 -1000.0
 ! ASHeightList =  6000.0 4000.0 2000.0 .0 .0 .0 .0
@@ -25,18 +25,24 @@ CosZenith = (0.9, 0.9)
 Azimuth = (0.0,0.0)
  HeightOfInj = 150.0e3
 ! Number of Events for MC generartion
- DestEventNo = 10 
+ DestEventNo = 10
 
 ! Generate ='em/as'
-! Generate ='em'
- Generate ='as'
+ Generate ='em' 
+! Generate ='as'
  ThinSampling = F
  IntModel = '"phits" 2.0 "dpmjet3"' 
 ! IntModel = '"phits" 2.0 "dpmjet3" 80 "qgsjet2"' 
 ! IntModel = '"phits" 2.0 "dpmjet3" 10 "sibyll"' 
  IncMuonPolari = T
  !KEminObs = 8*100e-6  ! 100 keV
- KEminObs = 400.  ! 100 keV
+ KEminObs = 1.0  ! 100 keV
+ KEminObs(1) = 10000.0
+ KEminObs(2) = 10000.0 
+ KEminObs(3) = 300.0
+ KEminObs(4) = 300.0
+ KEminObs(5) = 300.0
+ KEminObs(6) = 300.0
  LpmEffect = T
  MinPhotoProdE = .152
 ! PhotoProd = T   ! obso
@@ -74,6 +80,7 @@ Azimuth = (0.0,0.0)
  &HPARAM
  AnihiE = 10.
  AtmosFile=" "
+ AtmosModel = 1
  ! AtmosFile="$COSMOSTOP/Data/Atmos/NRLAtmos.d"
  NRL_period = 4*0
  BackAngLimit = -1.0
@@ -110,7 +117,7 @@ Azimuth = (0.0,0.0)
  HowGeomag = 32
  HowPhotoP = 1
  IncreaseXsec = 1.00
- KEminObs2 = .0
+ KEminObs2 = 0.0
 ! Knockon = T  ! obso
  Kpicns = 7.699999958276750E-002
  Kpilog = 6.200000178068880E-003

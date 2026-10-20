@@ -140,7 +140,8 @@
       if (id .eq. 2) then
              
 !     Selection of muons(3), kaons(4) and pions(5)             
-!         if ( pcode .eq. 3 .or. pcode .eq. 4 .or. pcode .eq. 5 ) then
+          ! if ( pcode .eq. 3 .or. pcode .eq. 4 .or. pcode .eq. 5 ) then
+            if ( pcode .le. 5 ) then
 
             ! event number 
             call cqEventNo(nevent, ntevent)
@@ -192,7 +193,7 @@
      *            pwx, pwy, pwz,
      *            incident%vec%coszenith,
      *            angle%r(1),angle%r(2),angle%r(3)
-!         endif  
+         endif  
       endif
 
 
@@ -234,6 +235,10 @@
 !     
       subroutine chookEInt(never)
       integer never
+
+      
+
+      never = 1
       end
 
       
@@ -242,6 +247,8 @@
 !     
       subroutine chookGInt(never)
       integer never
+
+      never = 1 
       end
 
       
@@ -250,7 +257,36 @@
 !     
 
       subroutine chookNEPInt(never)
+      use modSetIntInf
+      use modControl      
+      implicit none
+
+#include  "Ztrack.h"
+#include  "Ztrackp.h"
+#include  "Ztrackv.h"
+#include  "Zpwork.h"
+
       integer never
+      integer:: i, code, subcode, charge
+
+!     Kill all gamma rays, electrons and Pi0's produced in the interaction to speed up the simulation.
+      do i = 1, Nproduced
+          code = Pwork(i)%code
+          subcode = Pwork(i)%subcode
+          charge = Pwork(i)%charge
+          
+          if ( code .eq. 1 .or. code .eq. 2 .or. 
+     *      (code .eq. 4 .and. charge .eq. 0) ) then
+            ! write(*,*) 'code=', code, ' subcode=', subcode
+            Pwork(i)%fm%p(4) = Pwork(i)%mass
+            Pwork(i)%fm%p(1) = 0.0d0
+            Pwork(i)%fm%p(2) = 0.0d0
+            Pwork(i)%fm%p(3) = 0.0d0
+            
+          endif
+      enddo
+
+      never = 1
       end
 
       
