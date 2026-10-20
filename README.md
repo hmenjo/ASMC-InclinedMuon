@@ -44,6 +44,21 @@ The paramters for this MC generation are given in the text file "param". Only pa
 
 In addtion, "primary", the file name is specified in "param", specifies the energies (or spectrum) and compositions of the primary cosmic-rays. 
 
+## Improve the simulation speed 
+
+### Apply the threshold energies of particle tracking  
+To stop the tracking of particles with lower energies, the following lines should be added into 'param'
+```
+ KEminObs = 300.0  ! 100 keV
+ KEminObs(1) = 100000.0
+ KEminObs(2) = 100000.0 
+ KEminObs(3) = 300.0
+ KEminObs(4) = 300.0
+ KEminObs(5) = 300.0
+ KEminObs(6) = 300.0
+```
+The KEminObs parameter works only for EM components. To apply the energy threshold of tracking for hadrons, threshold value for each particle type should be specified. KEminObs(x) : threshold for particle code x, it means that Energy threshold for pions, kaons, nucleons are KEminObs(4), KEminObs(5), KEminObs(6) respectively. 
+
 
 # Cosmos App output 
 

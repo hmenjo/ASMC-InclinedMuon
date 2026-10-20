@@ -12,7 +12,8 @@
 
  SeedFile = 'Seed'
  InitRN = 300798  -3319907
- PrimaryFile = '/userdata/work/saito/MuonAnalysis/CosmosX_0.09/ASMC-InclinedMuon/cosmosapp/primary'
+ Primary = 'primary'
+! PrimaryFile = '/userdata/work/saito/MuonAnalysis/CosmosX_0.09/ASMC-InclinedMuon/cosmosapp/primary'
 ! PrimaryFile = 'primary_e'
 ! Zenith 70-90 degrees 
 CosZenith = (0.0, 1.0) 
@@ -35,7 +36,13 @@ DestEventNo = 100
 ! IntModel = '"phits" 2.0 "dpmjet3" 10 "sibyll"' 
  IncMuonPolari = T
 ! KEminObs = 8*100e-6  ! 100 keV
- KEminObs = 300e3  ! 100 keV
+ KEminObs = 300.  ! 100 keV
+ KEminObs(1) = 100000.0
+ KEminObs(2) = 100000.0 
+ KEminObs(3) = 300.0
+ KEminObs(4) = 300.0
+ KEminObs(5) = 300.0
+ KEminObs(6) = 300.0
  LpmEffect = T
  MinPhotoProdE = .152
 ! PhotoProd = T   ! obso
@@ -75,6 +82,7 @@ DestEventNo = 100
  &HPARAM
  AnihiE = 10.
  AtmosFile=" "
+ AtmosModel = 1
  ! AtmosFile="$COSMOSTOP/Data/Atmos/NRLAtmos.d"
  NRL_period = 4*0
  BackAngLimit = -1.0
