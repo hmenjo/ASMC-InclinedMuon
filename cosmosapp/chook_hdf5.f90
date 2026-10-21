@@ -24,7 +24,7 @@ module chook_hdf5
   public :: chook_h5_end_event
   public :: chook_h5_close
 
-  integer, parameter :: nobs_fields = 15
+  integer, parameter :: nobs_fields = 28
   integer, parameter :: nsite_fields = 7
   integer, parameter :: name_len = 16
   integer(hsize_t), parameter :: chunk_rows = 256_hsize_t
@@ -45,7 +45,20 @@ module chook_hdf5
     real(c_double) :: pz_gev
     real(c_double) :: t
     real(c_double) :: t_ns
-    real(c_double) :: user
+    integer(c_int) :: igen
+    integer(c_int) :: mother_pdg
+    integer(c_int) :: proj_pdg
+    integer(c_int) :: mult
+    real(c_double) :: mother_px
+    real(c_double) :: mother_py
+    real(c_double) :: mother_pz
+    real(c_double) :: proj_px
+    real(c_double) :: proj_py
+    real(c_double) :: proj_pz
+    real(c_double) :: xlab
+    real(c_double) :: pt
+    real(c_double) :: coll_height_m
+    real(c_double) :: decay_height_m
   end type obs_record
 
   type, bind(c) :: site_record
@@ -141,7 +154,7 @@ contains
     call put_real_id(file_id, "longitude_deg", longitude)
     call put_real_id(file_id, "dt_gmt_hours", dt_gmt)
     call put_real_id(file_id, "year_geomag", year_geomag)
-    call put_string_id(file_id, "format", "asmc-inclined-muon-v1")
+    call put_string_id(file_id, "format", "asmc-inclined-muon-v2")
 
     write(error_unit, "(a,a)") "HDF5 output: ", trim(filename)
     write(*, "(a,a)") "# HDF5 output: ", trim(filename)
@@ -205,14 +218,23 @@ contains
     call put_real(current_table, "dir_y", dir_y)
     call put_real(current_table, "dir_z", dir_z)
     call put_string(current_table, "units", &
-         "header E/ke GeV, p GeV/c; rows ke GeV, xyz m, p GeV/c")
+         "header E/ke GeV, p GeV/c; rows ke GeV, xyz m, p GeV/c, " // &
+         "mother/proj p GeV/c, Pt GeV/c, heights m")
     event_is_open = .true.
   end subroutine chook_h5_begin_event
 
   subroutine chook_h5_fill(where, code, subcode, charge, pdg, ke, &
-       x, y, z, px, py, pz, t, t_ns, user)
+       x, y, z, px, py, pz, t, t_ns, &
+       igen, mother_pdg, proj_pdg, mult, &
+       mother_px, mother_py, mother_pz, &
+       proj_px, proj_py, proj_pz, xlab, pt, &
+       coll_height_m, decay_height_m)
     integer, intent(in) :: where, code, subcode, charge, pdg
-    real(8), intent(in) :: ke, x, y, z, px, py, pz, t, t_ns, user
+    integer, intent(in) :: igen, mother_pdg, proj_pdg, mult
+    real(8), intent(in) :: ke, x, y, z, px, py, pz, t, t_ns
+    real(8), intent(in) :: mother_px, mother_py, mother_pz
+    real(8), intent(in) :: proj_px, proj_py, proj_pz
+    real(8), intent(in) :: xlab, pt, coll_height_m, decay_height_m
     type(obs_record), target :: rec
 
     if (.not. event_is_open) then
@@ -235,7 +257,20 @@ contains
     rec%pz_gev = pz
     rec%t = t
     rec%t_ns = t_ns
-    rec%user = user
+    rec%igen = int(igen, c_int)
+    rec%mother_pdg = int(mother_pdg, c_int)
+    rec%proj_pdg = int(proj_pdg, c_int)
+    rec%mult = int(mult, c_int)
+    rec%mother_px = mother_px
+    rec%mother_py = mother_py
+    rec%mother_pz = mother_pz
+    rec%proj_px = proj_px
+    rec%proj_py = proj_py
+    rec%proj_pz = proj_pz
+    rec%xlab = xlab
+    rec%pt = pt
+    rec%coll_height_m = coll_height_m
+    rec%decay_height_m = decay_height_m
     call append_one(current_table, obs_type_size, obs_offset, obs_sizes, &
          c_loc(rec))
     current_nrows = current_nrows + 1
@@ -269,10 +304,34 @@ contains
 
     if (layout_ready) return
 
-    obs_names = ["where   ", "code    ", "subcode ", "charge  ", &
-         "pdg     ", "ke_gev  ", "x_m     ", "y_m     ", &
-         "z_m     ", "px_gev  ", "py_gev  ", "pz_gev  ", &
-         "t       ", "t_ns    ", "user    "]
+    obs_names(1) = "where"
+    obs_names(2) = "code"
+    obs_names(3) = "subcode"
+    obs_names(4) = "charge"
+    obs_names(5) = "pdg"
+    obs_names(6) = "ke_gev"
+    obs_names(7) = "x_m"
+    obs_names(8) = "y_m"
+    obs_names(9) = "z_m"
+    obs_names(10) = "px_gev"
+    obs_names(11) = "py_gev"
+    obs_names(12) = "pz_gev"
+    obs_names(13) = "t"
+    obs_names(14) = "t_ns"
+    obs_names(15) = "igen"
+    obs_names(16) = "mother_pdg"
+    obs_names(17) = "proj_pdg"
+    obs_names(18) = "mult"
+    obs_names(19) = "mother_px"
+    obs_names(20) = "mother_py"
+    obs_names(21) = "mother_pz"
+    obs_names(22) = "proj_px"
+    obs_names(23) = "proj_py"
+    obs_names(24) = "proj_pz"
+    obs_names(25) = "xlab"
+    obs_names(26) = "pt"
+    obs_names(27) = "coll_height_m"
+    obs_names(28) = "decay_height_m"
     obs_base = c_loc(obs)
     obs_offset(1) = byte_offset(obs_base, c_loc(obs%where))
     obs_offset(2) = byte_offset(obs_base, c_loc(obs%code))
@@ -288,12 +347,29 @@ contains
     obs_offset(12) = byte_offset(obs_base, c_loc(obs%pz_gev))
     obs_offset(13) = byte_offset(obs_base, c_loc(obs%t))
     obs_offset(14) = byte_offset(obs_base, c_loc(obs%t_ns))
-    obs_offset(15) = byte_offset(obs_base, c_loc(obs%user))
+    obs_offset(15) = byte_offset(obs_base, c_loc(obs%igen))
+    obs_offset(16) = byte_offset(obs_base, c_loc(obs%mother_pdg))
+    obs_offset(17) = byte_offset(obs_base, c_loc(obs%proj_pdg))
+    obs_offset(18) = byte_offset(obs_base, c_loc(obs%mult))
+    obs_offset(19) = byte_offset(obs_base, c_loc(obs%mother_px))
+    obs_offset(20) = byte_offset(obs_base, c_loc(obs%mother_py))
+    obs_offset(21) = byte_offset(obs_base, c_loc(obs%mother_pz))
+    obs_offset(22) = byte_offset(obs_base, c_loc(obs%proj_px))
+    obs_offset(23) = byte_offset(obs_base, c_loc(obs%proj_py))
+    obs_offset(24) = byte_offset(obs_base, c_loc(obs%proj_pz))
+    obs_offset(25) = byte_offset(obs_base, c_loc(obs%xlab))
+    obs_offset(26) = byte_offset(obs_base, c_loc(obs%pt))
+    obs_offset(27) = byte_offset(obs_base, c_loc(obs%coll_height_m))
+    obs_offset(28) = byte_offset(obs_base, c_loc(obs%decay_height_m))
     obs_type_size = int(c_sizeof(obs), size_t)
     obs_sizes(1:5) = int(c_sizeof(obs%where), size_t)
-    obs_sizes(6:15) = int(c_sizeof(obs%ke_gev), size_t)
+    obs_sizes(6:14) = int(c_sizeof(obs%ke_gev), size_t)
+    obs_sizes(15:18) = int(c_sizeof(obs%igen), size_t)
+    obs_sizes(19:28) = int(c_sizeof(obs%mother_px), size_t)
     obs_types(1:5) = H5T_NATIVE_INTEGER
-    obs_types(6:15) = H5T_NATIVE_DOUBLE
+    obs_types(6:14) = H5T_NATIVE_DOUBLE
+    obs_types(15:18) = H5T_NATIVE_INTEGER
+    obs_types(19:28) = H5T_NATIVE_DOUBLE
 
     site_names = ["id         ", "depth_g_cm2", "height_m   ", &
          "radial_km  ", "x_m        ", "y_m        ", "z_m        "]

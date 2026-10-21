@@ -1,6 +1,16 @@
 # ASMC-InclinedMuon
 Example for inclined muon bundle studies 
 
+
+# Install CosmosX library
+
+Download the latest version of cosmosX source code from http://cosmos.icrr.u-tokyo.ac.jp/COSMOSweb/index.html.
+Before compiling the library, please replace the file Ztrack.h as 
+```
+cp  ./cosmosx_mod/Ztrack.h (COSMOS-INSTALL DIRECTORY)/Cosmos/cosmos/
+```
+This is needed to store many information of interactions in the track stracture. 
+
 # Compile cosmosapp 
 
 ```
@@ -85,7 +95,8 @@ export COSMOS_STDOUT=1
 The redirected text always contains the observation-site list, one `#PRIM` line, `#BEGIN_EVENT`, and `#END_EVENT`. With `COSMOS_STDOUT` set, each selected particle is also written between `#BEGIN_EVENT` and `#END_EVENT`, in the original format:
 
 ```
-            write(*,'(i10,4i4,i12,e18.8,3f14.4,5e17.8,f18.0,
+               write(*,'(i10,4i4,i12,e18.8,3f14.4,5e17.8,
+     *            i6,2i12,i6,10e15.6,
      *            i12,4e16.8,f15.10,3f15.10)')
      *            nevent,
      *            aTrack%where,
@@ -98,7 +109,12 @@ The redirected text always contains the observation-site list, one `#PRIM` line,
      *            aTrack%pos%xyz%r(3),
      *            aTrack%p%fm%p(1), aTrack%p%fm%p(2),
      *            aTrack%p%fm%p(3),
-     *            aTrack%t, t, aTrack%user,
+     *            aTrack%t, t,
+     *            igen, mpdg, ppdg, mult,
+     *            aTrack%user, aTrack%user2, aTrack%user3,
+     *            aTrack%user4, aTrack%user5, aTrack%user6,
+     *            aTrack%user7, aTrack%user8,
+     *            aTrack%user9, aTrack%user10,
      *            pdgcodein,
      *            incident%p%fm%p(4)-incident%p%mass,
      *            incident%p%fm%p(1),
@@ -122,7 +138,7 @@ The redirected text always contains the observation-site list, one `#PRIM` line,
 - aTrack%p%fm%p(3) : pz [GeV/c] (Local coordinate of the observation layer)
 - aTrack%t : arrival time of particle [ns] (offset of observation layer is considered)
 - t : arrival time [ns] of absolute time from the incident
-- aTrack%user : parent-interaction record packed into one real*8. Printed as an integer (`f18.0`). See [Parent interaction stored in `user`](#parent-interaction-stored-in-user).
+- igen, mpdg, ppdg, mult, and the ten reals that follow: the interaction record. `mpdg` and `ppdg` are the mother and projectile PDG codes stored in `integer*4`. See [Interaction record](#interaction-record).
 - pdgcodein : pdg code of incident particle
 - incident%p%fm%p(4)-incident%p%mass : Kinetic energy of incident particle [GeV]
 - incident%p%fm%p(1) : px of incident particle in Earth coordinate [GeV/c]
@@ -143,7 +159,7 @@ The redirected text always contains the observation-site list, one `#PRIM` line,
 
 HDF5 is written for every run, whether or not `COSMOS_STDOUT` is set.
 
-- File attributes: `latitude_deg`, `longitude_deg`, `dt_gmt_hours`, `year_geomag`
+- File attributes: `latitude_deg`, `longitude_deg`, `dt_gmt_hours`, `year_geomag`, `format` (`asmc-inclined-muon-v2`)
 - `/obs_sites`: one row per observation layer (`id`, `depth_g_cm2`, `height_m`, `radial_km`, `x_m`, `y_m`, `z_m`)
 - `/event_NNNNNNNN`: one HDF5 table per event. `NNNNNNNN` is the event number.
 
@@ -167,43 +183,41 @@ Each selected particle (muons, kaons, pions at an observation level) is one row:
 - `px_gev`, `py_gev`, `pz_gev`: momentum [GeV/c] in that coordinate
 - `t`: `aTrack%t`
 - `t_ns`: `aTrack%t + minitime/c*Tonsec`
-- `user`: same packed parent-interaction value as `aTrack%user` (full `real*8`, so all 12 digits are exact). See [Parent interaction stored in `user`](#parent-interaction-stored-in-user).
+- `igen`, `mother_pdg`, `proj_pdg`, `mult`: interaction integers. See [Interaction record](#interaction-record).
+- `mother_px`, `mother_py`, `mother_pz`: mother momentum at production [GeV/c]
+- `proj_px`, `proj_py`, `proj_pz`: projectile momentum [GeV/c]
+- `xlab`: `E_mother / E_projectile`
+- `pt`: mother transverse momentum [GeV/c]
+- `coll_height_m`: height of that hadron collision [m]
+- `decay_height_m`: height where the mother decayed [m]; 0 if it did not decay
 
-## Parent interaction stored in `user`
+## Interaction record
 
-`user` describes the hadron that the observed particle came from, and the hadron collision that produced that hadron. The analysis target is the muon. Pions and kaons that reach an observation level carry the same kind of record.
+The record describes the mother of the observed particle and the hadron collision that produced that mother. The analysis target is the muon. Pions and kaons that reach an observation level carry the same record. Values are kept on `type track` and copied with the particle; they are not packed into one number.
 
-The value is one integer of up to 12 digits, stored in `real*8`:
+`user_i1` through `user_i5` are `integer*4`. The mother PDG and the projectile PDG are stored directly in `user_i2` and `user_i3`. A nuclear code such as iron (`1000260560`) fits, so there is no clipped copy and `user11` / `user12` are not used.
 
-```text
-PP GG XXXX YYYY
-user = pid*1e10 + gen*1e8 + nint(Xlab*1000)*1e4 + nint(Pt*10)
-```
-
-| Digits | Field | Meaning |
+| Track field | Output | Meaning |
 |---|---|---|
-| PP | parent PID | Cosmos code of the parent. Pion = 4, kaon = 5. `0` if this particle was produced directly in a hadron collision (`coll`), not by a decay. |
-| GG | generation | Which hadron collision produced that parent. The primary's first `coll` is 1. The next `coll` of a secondary is 2, and so on. `decay` is not counted. |
-| XXXX | Xlab | `E_parent / E_projectile` at that collision, using total energy `p(4)`. Three digits after the decimal: 0250 means 0.250. Values above 9.999 are stored as 9999. |
-| YYYY | Pt | Transverse momentum of the parent with respect to the projectile momentum, in GeV/c, to 0.1 GeV/c. 0015 means 1.5. Values above 999.9 are stored as 9999. |
+| `user_i1` | `igen` | Hadron-collision generation that created the mother. The primary is 0. Its first `coll` is 1. Only `coll` is counted; `decay` is not. |
+| `user_i2` | `mother_pdg` | PDG code of the mother. 0 if this particle was produced directly in `coll`. |
+| `user_i3` | `proj_pdg` | PDG code of the projectile of that collision. |
+| `user_i4` | `mult` | Number of particles produced in that collision. |
+| `user`, `user2`, `user3` | `mother_px/py/pz` | Mother momentum at production [GeV/c], not at decay. For a direct `coll` product the mother is that product itself, so this is its own momentum. |
+| `user4`, `user5`, `user6` | `proj_px/py/pz` | Projectile momentum at that collision [GeV/c]. |
+| `user7` | `xlab` | `E_mother / E_projectile` using total energy `p(4)`. |
+| `user8` | `pt` | Mother momentum perpendicular to the projectile momentum [GeV/c]. |
+| `user9` | `coll_height_m` | Height of that collision [m]. |
+| `user10` | `decay_height_m` | Height where the mother decayed [m]. 0 if there was no decay. |
+| `user11`, `user12`, `user_i5` | | Unused. |
 
-Example: `40102500015` is parent pion (4), generation 1, Xlab = 0.250, Pt = 1.5 GeV/c.
+How the mother is chosen:
 
-How the parent is chosen:
-
-- On `coll`, each product is given PID 0, generation = projectile generation + 1, and that product's own Xlab and Pt.
-- On `decay`, the Cosmos code of the decaying particle is written as the parent PID only when the stored PID is still 0 (the decaying particle itself came from `coll`). Generation, Xlab and Pt are left as they were.
-- `K → π → μ` therefore keeps K as the parent. The kaon decay writes PID 5; the later pion decay does not replace it. Xlab and Pt stay those of the collision that produced the kaon.
-- A muon produced directly in `coll` keeps PID 0. Its generation, Xlab and Pt are those of that collision.
-- The primary starts at 0. Knock-on, pair production, bremsstrahlung and muon nuclear interaction do not rewrite this record; the products inherit it.
-
-```python
-n = int(round(user))
-pt = (n % 10000) / 10.0          # GeV/c
-xlab = ((n // 10000) % 10000) / 1000.0
-gen = (n // 100000000) % 100
-pid = n // 10000000000           # 0, 4 (pion), 5 (kaon), ...
-```
+- On `coll`, each product gets mother PDG 0, generation = projectile generation + 1, and that product's own momentum, Xlab and Pt. Projectile PDG, projectile momentum, multiplicity and collision height are taken from this collision.
+- On `decay`, the decaying particle becomes the mother only when the stored mother PDG is still 0. Generation, momenta, Xlab, Pt, projectile, multiplicity and collision height are left unchanged. `decay_height_m` is set to the decay height.
+- `K → π → μ` keeps K as the mother. The kaon decay writes the kaon PDG and the kaon decay height. The later pion decay does not replace them. Xlab and Pt stay those of the collision that produced the kaon.
+- A muon produced directly in `coll` keeps mother PDG 0 and decay height 0.
+- The primary starts at zero. Knock-on, pair production, bremsstrahlung and muon nuclear interaction do not rewrite this record; the products inherit it.
 
 Reading one event table:
 
@@ -212,7 +226,7 @@ import h5py
 with h5py.File("cosmos.h5", "r") as f:
     table = f["event_00000001"]
     print(table.attrs["pdg"], table.attrs["energy_gev"])
-    print(table["where"][:], table["ke_gev"][:])
+    print(table["mother_pdg"][:], table["proj_pdg"][:], table["igen"][:])
 ```
 
 # Note 
