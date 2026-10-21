@@ -109,13 +109,21 @@
       implicit none
 #include "Ztrack.h"
 #include "Zcode.h"
+#include "Zstackv.h"
 
       type(coord):: angle
       type(track):: incident
       integer:: pdgcode
       integer:: nevent, ntevent
       integer:: icode, isub, ichg
+      integer:: istk
       real(8):: etot, ekin, px, py, pz
+
+!     Primary has not yet come from a hadron interaction.
+!     chookNEPInt reads this as generation 0 and parent PID 0.
+      do istk = 1, Stack_pos
+         Stack(istk)%user = 0.d0
+      enddo
 
       call cqIncident(incident, angle)
       call ccos2pdg(incident%p, pdgcode)
@@ -191,7 +199,12 @@
 
       if (id .eq. 2) then
              
-!     Selection of muons(3), kaons(4) and pions(5)             
+!     Selection of muons(3), pions(4) and kaons(5).
+!     aTrack%user is packed by chookNEPInt:
+!       pid*1d10 + gen*1d8 + nint(Xlab*1000)*1d4 + nint(Pt*10)
+!     pid: Cosmos code of the decay parent (0 if born in 'coll')
+!     gen: hadron-collision generation that produced that parent
+!     Xlab = E_parent/E_projectile. Pt is in GeV/c.
          if ( pcode .eq. 3 .or. pcode .eq. 4 .or. pcode .eq. 5 ) then
 
             ! CosmosX PID -> PDG code
@@ -216,7 +229,7 @@
                call cqIncident(incident, angle)
                call ccos2pdg(incident%p, pdgcodein)
                t = tns
-               write(*,'(i10,4i4,i12,e18.8,3f14.4,6e17.8,
+               write(*,'(i10,4i4,i12,e18.8,3f14.4,5e17.8,f18.0,
      *            i12,4e16.8,f15.10,3f15.10)')
      *            nevent,
      *            aTrack%where,
@@ -295,7 +308,134 @@
 !     
 
       subroutine chookNEPInt(never)
-      integer never
+      use modSetIntInf
+      implicit none
+
+#include  "Ztrack.h"
+#include  "Ztrackp.h"
+#include  "Ztrackv.h"
+#include  "Zpwork.h"
+
+      integer:: never
+      integer:: i
+      integer:: pid, gen, ixlab, ipt, code
+      real*8:: eproj, xlab, pt, pt2, ppar, p2, pabs
+      real*8:: ux, uy, uz
+      character*8:: proc
+      type(track):: aTrack
+
+!     Called before Cosmos stacks Pwork.  never must stay 0 so that
+!     this hook runs at every non-e-g interaction in the event.
+!     Track%user (12 decimal digits, exact in real*8):
+!       PP GG XXXX YYYY
+!       = pid*1d10 + gen*1d8 + ixlab*1d4 + ipt
+!     PP    parent Cosmos code. 0 if this particle was born in 'coll'.
+!           pion=4, kaon=5. Written only on 'decay', and only when the
+!           decaying particle itself was born in 'coll' (stored pid=0).
+!           A later decay (K->pi->mu) does not replace K with pi.
+!     GG    hadron-collision generation that created that parent.
+!           Primary is 0. First 'coll' is 1. 'decay' is not counted.
+!     XXXX  Xlab=E_parent/E_projectile at that collision, as 0.XXX
+!           (nint(Xlab*1000), so 0250 means 0.250; saturates at 9.999).
+!     YYYY  Pt of the parent perpendicular to the projectile momentum,
+!           in GeV/c as XXX.X (nint(Pt*10); saturates at 999.9).
+!     Example: 40102500015 = pid 4, gen 1, Xlab 0.250, Pt 1.5 GeV/c.
+!
+!     On 'coll' the products are stacked here and Nproduced is cleared
+!     so Cosmos does not stack them again. Each product gets its own
+!     Xlab and Pt. ThinSampling is not applied to those products.
+      proc = IntInfArray(ProcessNo)%process
+
+      if(proc .eq. 'coll') then
+         call chookUnpackUser(MovedTrack%user, pid, gen, ixlab, ipt)
+         gen = gen + 1
+         if(gen .gt. 99) gen = 99
+         eproj = MovedTrack%p%fm%p(4)
+         p2 = MovedTrack%p%fm%p(1)**2 + MovedTrack%p%fm%p(2)**2
+     *      + MovedTrack%p%fm%p(3)**2
+         pabs = sqrt(p2)
+         if(pabs .gt. 0.d0) then
+            ux = MovedTrack%p%fm%p(1)/pabs
+            uy = MovedTrack%p%fm%p(2)/pabs
+            uz = MovedTrack%p%fm%p(3)/pabs
+         else
+            ux = MovedTrack%vec%w%r(1)
+            uy = MovedTrack%vec%w%r(2)
+            uz = MovedTrack%vec%w%r(3)
+         endif
+         do i = 1, Nproduced
+            aTrack = MovedTrack
+            aTrack%p = Pwork(i)
+            if(eproj .gt. 0.d0) then
+               xlab = aTrack%p%fm%p(4)/eproj
+            else
+               xlab = 0.d0
+            endif
+            ixlab = nint(xlab*1000.d0)
+            if(ixlab .lt. 0) ixlab = 0
+            if(ixlab .gt. 9999) ixlab = 9999
+            ppar = aTrack%p%fm%p(1)*ux + aTrack%p%fm%p(2)*uy
+     *           + aTrack%p%fm%p(3)*uz
+            p2 = aTrack%p%fm%p(1)**2 + aTrack%p%fm%p(2)**2
+     *         + aTrack%p%fm%p(3)**2
+            pt2 = p2 - ppar*ppar
+            if(pt2 .lt. 0.d0) pt2 = 0.d0
+            pt = sqrt(pt2)
+            ipt = nint(pt*10.d0)
+            if(ipt .lt. 0) ipt = 0
+            if(ipt .gt. 9999) ipt = 9999
+            call chookPackUser(0, gen, ixlab, ipt, aTrack%user)
+            call cresetDirec(aTrack)
+            call csaveParent(aTrack)
+            call cpush(aTrack)
+         enddo
+         Nproduced = 0
+         never = 0
+      elseif(proc .eq. 'decay') then
+         call chookUnpackUser(MovedTrack%user, pid, gen, ixlab, ipt)
+         if(pid .eq. 0) then
+            code = MovedTrack%p%code
+            if(code .lt. 0) code = 0
+            if(code .gt. 99) code = 99
+            call chookPackUser(code, gen, ixlab, ipt,
+     *         MovedTrack%user)
+         endif
+         never = 0
+      else
+         never = 0
+      endif
+
+      end
+
+!     Pack parent-interaction fields into Track%user.
+      subroutine chookPackUser(pid, gen, ixlab, ipt, user)
+      implicit none
+      integer pid, gen, ixlab, ipt
+      real*8 user
+      user = dble(pid)*1.0d10 + dble(gen)*1.0d8
+     *     + dble(ixlab)*1.0d4 + dble(ipt)
+      end
+
+!     Inverse of chookPackUser. The 12-digit integer is exact in real*8.
+      subroutine chookUnpackUser(user, pid, gen, ixlab, ipt)
+      implicit none
+      real*8 user
+      integer pid, gen, ixlab, ipt
+      real*8 u, r
+      u = anint(user)
+      if(u .lt. 0.d0) u = 0.d0
+      r = mod(u, 1.0d4)
+      ipt = nint(r)
+      u = anint((u - r)/1.0d4)
+      r = mod(u, 1.0d4)
+      ixlab = nint(r)
+      u = anint((u - r)/1.0d4)
+      r = mod(u, 1.0d2)
+      gen = nint(r)
+      u = anint((u - r)/1.0d2)
+      pid = nint(u)
+      if(pid .lt. 0) pid = 0
+      if(pid .gt. 99) pid = 99
       end
 
       
